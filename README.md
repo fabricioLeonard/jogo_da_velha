@@ -2,13 +2,15 @@
 
 # 🎮 Jogo da Velha — MVP
 
+![Versão](https://img.shields.io/badge/Versão-v1.0.0-blue?style=for-the-badge)
 ![Python](https://img.shields.io/badge/Python-3.13%2B-3776AB?style=for-the-badge&logo=python&logoColor=white)
 ![Pygame](https://img.shields.io/badge/Pygame-2.6.1-00B140?style=for-the-badge&logo=python&logoColor=white)
 ![SQLAlchemy](https://img.shields.io/badge/SQLAlchemy-ORM-d71f00?style=for-the-badge&logo=sqlite&logoColor=white)
+![python-dotenv](https://img.shields.io/badge/python--dotenv-env-ECD53F?style=for-the-badge&logo=dotenv&logoColor=black)
 ![Pytest](https://img.shields.io/badge/Pytest-Testado-0A9EDC?style=for-the-badge&logo=pytest&logoColor=white)
-![Licença](https://img.shields.io/badge/Licen%C3%A7a-MIT-yellow?style=for-the-badge)
+![Licença](https://img.shields.io/badge/Licença-MIT-yellow?style=for-the-badge)
 
-**Um MVP funcional do clássico Jogo da Velha (Tic-Tac-Toe), construído com Python e Pygame, com arquitetura modular, salvamento automático de histórico no banco de dados e metodologia NLDD.**
+**Um MVP funcional do clássico Jogo da Velha (Tic-Tac-Toe), construído com Python e Pygame, com arquitetura modular, salvamento automático de histórico via SQLAlchemy e metodologia NLDD.**
 
 </div>
 
@@ -19,8 +21,8 @@
 - [Funcionalidades](#-funcionalidades)
 - [Tecnologias Utilizadas](#-tecnologias-utilizadas)
 - [Pré-requisitos e Instalação](#-pré-requisitos-e-instalação)
-- [Como Executar](#-como-executar)
-- [Persistência e Configuração](#️-persistência-e-configuração)
+- [Configuração do Ambiente](#️-configuração-do-ambiente)
+- [Como Executar](#️-como-executar)
 - [Arquitetura do Projeto](#-arquitetura-do-projeto)
 - [Controles](#-controles)
 - [Contribuição](#-contribuição)
@@ -30,25 +32,27 @@
 ## ✨ Funcionalidades
 
 - 🧠 **Lógica de negócio isolada** — a classe `Board` é completamente independente do Pygame, podendo ser reutilizada ou testada sem interface gráfica
-- 🎨 **Interface gráfica com tema escuro premium** — janela 600×660 px com paleta de cores harmoniosa, peças com efeito de brilho (*glow*) e animações de hover
-- 🗄️ **Armazenamento de Partidas** — os resultados das partidas são salvos automaticamente em um banco de dados via SQLAlchemy
+- 🎨 **Interface gráfica com tema escuro** — janela 600×600 px com paleta de cores harmoniosa, símbolos X e O em ciano e rosa-coral, linha dourada sobre as células vencedoras
+- 🗄️ **Persistência automática** — ao fim de cada partida (vitória ou empate), o resultado é gravado exatamente **uma vez** na tabela `partidas` via flag `resultado_gravado`
 - 🏆 **Detecção automática de vitória** — avalia todas as 8 combinações possíveis (3 linhas, 3 colunas, 2 diagonais)
-- 🤝 **Detecção de empate** — identifica tabuleiro cheio sem vencedor
-- 🔄 **Reinício rápido de partida** — sem necessidade de fechar e reabrir a aplicação
-- 🛡️ **Validação completa de jogadas** — rejeita coordenadas fora dos limites, células já ocupadas e jogadas após fim de jogo
-- 🧪 **Suíte de testes unitários** — 30+ casos de teste cobrindo todos os cenários da lógica de negócio
+- 🤝 **Detecção de empate** — identifica tabuleiro cheio sem vencedor (velha)
+- 🔄 **Reinício rápido** — tecla `R` reinicia a partida sem fechar a aplicação
+- 🛡️ **Validação completa de jogadas** — rejeita coordenadas fora dos limites e células já ocupadas
+- 📋 **Histórico no terminal** — ao encerrar, exibe tabela formatada com todas as partidas e resumo estatístico
+- 🔍 **Inspeção do banco via CLI** — `src/inspect_db.py` com filtros `--limite` e `--vencedor`
+- 🧪 **Suíte de testes unitários** — 30+ casos cobrindo todos os cenários, com validação do estado interno da matriz
 
 ---
 
 ## 🛠️ Tecnologias Utilizadas
 
-| Camada | Tecnologia | Versão | Finalidade |
-|---|---|---|---|
-| Linguagem | Python | 3.13+ | Base do projeto |
-| Interface Gráfica | Pygame | 2.6.1 | Renderização e eventos |
-| Banco de Dados | SQLAlchemy (SQLite/PostgreSQL) | latest | Persistência de resultados |
-| Variáveis de Ambiente | python-dotenv | latest | Carregamento de configurações seguras |
-| Testes | Pytest | latest | Validação da lógica |
+| Camada | Tecnologia | Finalidade |
+|---|---|---|
+| Linguagem | Python 3.13+ | Base do projeto |
+| Interface Gráfica | Pygame 2.6.1 | Renderização e loop de eventos |
+| Banco de Dados | SQLAlchemy + SQLite | Persistência de resultados (ORM) |
+| Variáveis de Ambiente | python-dotenv | Carregamento seguro de configurações |
+| Testes | Pytest | Validação da lógica de negócio |
 
 ---
 
@@ -59,12 +63,12 @@
 - pip (gerenciador de pacotes Python)
 - Git
 
-### Passo a passo de Instalação
+### Passo a passo
 
 **1. Clone o repositório**
 ```bash
-git clone https://github.com/seu-usuario/jogo_da_velha_mvp.git
-cd jogo_da_velha_mvp
+git clone https://github.com/seu-usuario/jogo_da_velha.git
+cd jogo_da_velha
 ```
 
 **2. Crie e ative o ambiente virtual**
@@ -86,25 +90,40 @@ pip install -r requirements.txt
 
 ---
 
-## 🗄️ Persistência e Configuração
+## 🔐 Configuração do Ambiente
 
-O MVP conta com uma camada de banco de dados robusta gerida pelo **SQLAlchemy**. A conexão é parametrizada de forma segura através do pacote **python-dotenv**, que lê as variáveis contidas no arquivo `.env`.
+O projeto usa **python-dotenv** para carregar configurações a partir do arquivo `.env` na raiz do projeto.
 
-### O arquivo `.env` e suas configurações
-
-Antes de rodar o projeto pela primeira vez, você precisa criar um arquivo `.env` na raiz do projeto (geralmente copiando do `.env.example`). O arquivo `.env` contém configurações sensíveis e parâmetros de ambiente da sua máquina.
-
-**Exemplo do conteúdo esperado no `.env`**:
-```env
-DATABASE_URL=sqlite:///./jogo.db
-DEBUG=True
+**1. Copie o arquivo de exemplo:**
+```bash
+cp .env.example .env
 ```
 
-**Explicação das variáveis:**
-- `DATABASE_URL`: Define a string de conexão com o banco de dados. No exemplo acima, configuramos para criar um banco de dados local chamado `jogo.db` na raiz do projeto (SQLite). Se você desejar usar um banco como PostgreSQL no futuro, basta alterar essa string (ex: `postgresql://usuario:senha@localhost/meubanco`).
-- `DEBUG`: Define se a aplicação deve exibir logs mais detalhados (como o SQL gerado pelo SQLAlchemy no console). 
+**2. Conteúdo do `.env`:**
+```env
+# String de conexão com o banco de dados
+DATABASE_URL=sqlite:///jogo_da_velha.db
+```
 
-Sempre que uma partida é concluída (vitória ou empate), a aplicação aciona o módulo `src/database.py`, que se conecta à `DATABASE_URL` informada, cria as tabelas caso não existam, e salva o vencedor, a quantidade de jogadas e a data/hora.
+**Variáveis disponíveis:**
+
+| Variável | Obrigatória | Padrão (fallback) | Descrição |
+|---|---|---|---|
+| `DATABASE_URL` | Não | `sqlite:///jogo_da_velha.db` | URL de conexão SQLAlchemy. Compatível com SQLite, PostgreSQL e MySQL |
+
+> **Nota:** Se `DATABASE_URL` não for definida, o `database.py` usa automaticamente SQLite local com aviso no terminal. As tabelas são criadas automaticamente na primeira execução.
+
+**Exemplos de `DATABASE_URL`:**
+```env
+# SQLite (desenvolvimento)
+DATABASE_URL=sqlite:///jogo_da_velha.db
+
+# PostgreSQL (produção)
+DATABASE_URL=postgresql+psycopg2://usuario:senha@localhost:5432/jogo_da_velha
+
+# MySQL / MariaDB
+DATABASE_URL=mysql+pymysql://usuario:senha@localhost:3306/jogo_da_velha
+```
 
 ---
 
@@ -112,24 +131,41 @@ Sempre que uma partida é concluída (vitória ou empate), a aplicação aciona 
 
 ### 1. Iniciar o jogo
 
-Certifique-se de que o `.env` foi criado. Em seguida, rode:
-
 ```bash
 python src/main.py
 ```
 
-### 2. Verificar o Banco de Dados
+A janela Pygame abrirá. As partidas são salvas automaticamente no banco ao terminar.
+Ao fechar, o histórico completo é exibido no terminal.
 
-Para verificar os registros salvos localmente sem precisar abrir um cliente SQL, execute o script auxiliar:
+### 2. Inspecionar o banco de dados
+
+Use `src/inspect_db.py` para consultar o histórico sem abrir um cliente SQL:
 
 ```bash
-python verificar_banco.py
+# Todos os registros
+python src/inspect_db.py
+
+# Últimas 5 partidas
+python src/inspect_db.py --limite 5
+
+# Apenas vitórias de X
+python src/inspect_db.py --vencedor X
+
+# Empates com limite
+python src/inspect_db.py --vencedor Empate --limite 3
 ```
+
+**Filtros disponíveis:**
+
+| Flag | Atalho | Valores aceitos | Descrição |
+|---|---|---|---|
+| `--limite` | `-l` | inteiro | Número máximo de registros |
+| `--vencedor` | `-v` | `X`, `O`, `Empate` | Filtra pelo resultado da partida |
 
 ### 3. Executar os testes unitários
 
 ```bash
-# Execução simples com saída detalhada
 pytest tests/ -v
 ```
 
@@ -137,26 +173,35 @@ pytest tests/ -v
 
 ## 🏗️ Arquitetura do Projeto
 
-O projeto adota a metodologia **NLDD (Natural Language Driven Development)**, garantindo a máxima separação de responsabilidades.
+O projeto adota a metodologia **NLDD (Natural Language Driven Development)**, com separação clara de responsabilidades.
 
 ```text
-jogo_da_velha_mvp/
+jogo_da_velha/
 │
 ├── src/
-│   ├── __init__.py       # Marca src/ como pacote Python
-│   ├── logic.py          # 🧠 LÓGICA DE NEGÓCIO — classe Board (zero dependência visual)
-│   ├── database.py       # 🗄️ BANCO DE DADOS — SQLAlchemy e modelos de persistência
-│   └── main.py           # 🎨 INTERFACE GRÁFICA — renderização Pygame e loop de eventos
+│   ├── logic.py          # 🧠 LÓGICA — classe Board (zero dependência visual)
+│   ├── database.py       # 🗄️ DADOS — SQLAlchemy, modelo Partida, salvar_resultado()
+│   ├── main.py           # 🎨 INTERFACE — Pygame, loop de eventos, flag resultado_gravado
+│   └── inspect_db.py     # 🔍 CLI — inspeção do banco com filtros e resumo estatístico
 │
 ├── tests/
-│   ├── __init__.py       # Marca tests/ como pacote Python
-│   └── test_logic.py     # 🧪 TESTES UNITÁRIOS — 30+ casos via Pytest
+│   └── test_logic.py     # 🧪 TESTES — 30+ casos com validação da matriz interna
 │
 ├── .env                  # Variáveis de ambiente locais (não versionado)
-├── .env.example          # Exemplo de configuração de variáveis
-├── requirements.txt      # Dependências do projeto
-├── verificar_banco.py    # Script utilitário para listar partidas
+├── .env.example          # Modelo de configuração de variáveis
+├── .gitignore            # Arquivos ignorados pelo Git
+├── LICENSE               # Licença MIT
 └── README.md             # Esta documentação
+```
+
+### Fluxo de dados
+
+```
+main.py
+  └─► Board.make_move()       [logic.py]
+        └─► check_winner() / is_full()
+              └─► salvar_resultado()  [database.py]  ← chamado 1× via resultado_gravado
+                    └─► tabela `partidas` no banco (DATABASE_URL)
 ```
 
 ---
@@ -165,9 +210,9 @@ jogo_da_velha_mvp/
 
 | Ação | Controle |
 |---|---|
-| Realizar jogada | Clique esquerdo do rato na célula |
-| Reiniciar partida | Tecla `R` ou clique após fim de jogo |
-| Sair da aplicação | Tecla `ESC` ou fechar a janela |
+| Realizar jogada | Clique esquerdo na célula desejada |
+| Reiniciar partida | Tecla `R` |
+| Sair da aplicação | Tecla `Q`, `ESC` ou fechar a janela |
 
 ---
 
